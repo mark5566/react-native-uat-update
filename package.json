@@ -1,0 +1,27 @@
+{
+  "name": "react-native-uat-update",
+  "version": "1.0.0",
+  "description": "包含热更新codepush以及appstore更新检查",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mark5566/react-native-uat-update.git"
+  },
+  "keywords": [
+    "更新",
+    "版本检查"
+  ],
+  "author": "mark",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mark5566/react-native-uat-update/issues"
+  },
+  "homepage": "https://github.com/mark5566/react-native-uat-update#readme",
+  "dependencies": {
+    "react-native-code-push": "^5.7.0",
+    "react-native-device-info": "^2.3.2"
+  }
+}
