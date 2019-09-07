@@ -4,4 +4,7 @@
 
 ### IOS配置info.plist
 - CodePushServerURL : http://www.mokingran.com:13000
-- 
+
+宽高默认值：
+	- 宽：300
+	- 高：300

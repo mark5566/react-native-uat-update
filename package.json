@@ -1,27 +1,55 @@
 {
-  "name": "react-native-uat-update",
-  "version": "1.0.0",
+  "_from": "react-native-uat-update",
+  "_id": "react-native-uat-update@1.0.0",
+  "_inBundle": false,
+  "_integrity": "sha512-4mhKSdR+C4ie424g4erQa5c4Gcfa+nJGwrKIv0n1JpYmo2/xmHPV9rzwWlNDBYw1+C6vxAFk26aeeZKBbgABBg==",
+  "_location": "/react-native-uat-update",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "tag",
+    "registry": true,
+    "raw": "react-native-uat-update",
+    "name": "react-native-uat-update",
+    "escapedName": "react-native-uat-update",
+    "rawSpec": "",
+    "saveSpec": null,
+    "fetchSpec": "latest"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/react-native-uat-update/-/react-native-uat-update-1.0.0.tgz",
+  "_shasum": "bd8a1bb1396ccca8dc1f144cda186fb846ee3c34",
+  "_spec": "react-native-uat-update",
+  "_where": "/Users/mark/Desktop/mark/npmExample",
+  "author": {
+    "name": "mark"
+  },
+  "bugs": {
+    "url": "https://github.com/mark5566/react-native-uat-update/issues"
+  },
+  "bundleDependencies": false,
+  "dependencies": {
+    "react-native-code-push": "5.5.1",
+    "react-native-device-info": "^2.3.2"
+  },
+  "deprecated": false,
   "description": "包含热更新codepush以及appstore更新检查",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mark5566/react-native-uat-update.git"
-  },
+  "homepage": "https://github.com/mark5566/react-native-uat-update#readme",
   "keywords": [
     "更新",
     "版本检查"
   ],
-  "author": "mark",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/mark5566/react-native-uat-update/issues"
+  "main": "index.js",
+  "name": "react-native-uat-update",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mark5566/react-native-uat-update.git"
   },
-  "homepage": "https://github.com/mark5566/react-native-uat-update#readme",
-  "dependencies": {
-    "react-native-code-push": "^5.7.0",
-    "react-native-device-info": "^2.3.2"
-  }
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.0.0"
 }

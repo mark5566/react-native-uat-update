@@ -43,7 +43,7 @@ export class UpdateStatus {
 export class UpdateProp {
 	version : String;
 	title 				: String;
-	newFeature    : String[];
+	_newFeature: String[];
 	size  				: Number;//单位：MB
 
 

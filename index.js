@@ -12,6 +12,8 @@ import {
 		ViewStyle,
 		Modal,
 		ScrollView,
+		TouchableWithoutFeedback,
+		Linking,
 } from 'react-native';
 import { UpdateProp,AppInfo,AppStoreResponse, UpdateStatus, } from './index.model';
 import CodePush, { 
@@ -21,17 +23,21 @@ import CodePush, {
 	LocalPackage,
  } from "react-native-code-push";
 import DeviceInfo from "react-native-device-info";
+import { FindNewUpdate } from 'react-native-uat-update/view/findNewUpdate';
+import { HeaderDetault } from "react-native-uat-update/view/headerDefault";
+import { defaultContainerStyle, defaultModelStyle, defaultHeaderContainer } from 'react-native-uat-update/index.default';
+import { DownloadView } from 'react-native-uat-update/view/downloadView';
 
 type Props = {
 		style : ViewStyle,
 		appleid         : String,//appleID，必须
 		
 		supportCodePush : Boolean,//是否支持热更新
-		codepushKey     :?String,//热更新检测地址
-		codepushDebugKey:?String,//热更新测试版本key
+		codepushKey     : String,//热更新检测地址
+		codepushDebugKey: String,//热更新测试版本key
 		forceUpdate     : Boolean,//是否强制更新
 
-		wrapper    : (state:State):View,//容器
+		wrapper    : (state:State)=>View,//容器
 		themeColor 			: String,//主题颜色
 
 		onCheckingAppStore : ()=>{},//检查appstore
@@ -46,11 +52,12 @@ type Props = {
 		onCPInstallComplete: ()=>{},//安装完成
 		onRestart 				 : ()=>{},//重启
 };
-type State = {
+export type State = {
 	data : UpdateProp,
 	show : Boolean,
 	status : UpdateStatus,
 	downloadProgress:DownloadProgress,
+	remtePackage:?RemotePackage,
 };
 
 const Header = (state:State)=>{
@@ -63,13 +70,15 @@ const Header = (state:State)=>{
 
 export class Version extends Component <Props,State>{
 		static defaultProps :Props = {
+			style:defaultContainerStyle,
+
 			supportCodePush : true,
 			codepushKey : '',
 			codepushDebugKey:'',
 			appleid : '1448092987',
 			forceUpdate:true,
-			themeColor : 'red',
-			wrapper : (state:State)=>Header(state),
+			themeColor : 'rgb(230,180,120)',
+			wrapper : (state:State)=><HeaderDetault data={state}/>,
 			
 			onCheckingAppStore : ()=>{},//检查appstore
 			onCheckedAppStore  : (update:UpdateProp)=>{},//检查到appstore版本有更新
@@ -87,14 +96,27 @@ export class Version extends Component <Props,State>{
 			
 		}
 		state:State={
-			data : null,
+			data : {
+				title:'检查更新',
+			},
 			show : false,
 			status: UpdateStatus.NoCheck,
+			remotePackage:null
 		}
 
 		//修改当前状态
 		onChangeStatus = (status:UpdateStatus)=>{
-			this.setState({status : status,data:{...this.state.data,title:status}};
+			console.log(`当前状态:${status}`);
+			this.setState({status : status,
+										data:{
+											...this.state.data,
+											title:status
+										}},
+										()=>{
+											if(status == UpdateStatus.AppStoreHasUpdate || status == UpdateStatus.CodepushHasUpdate){
+												this.onChangeModal(true)
+											}
+										});
 		}
 
 		//显示模态窗
@@ -114,7 +136,8 @@ export class Version extends Component <Props,State>{
 			let appleid:String = this.props.appleid;
 			let url:String = `http://itunes.apple.com/lookup?id=${appleid}`;
 			this.onChangeStatus(UpdateStatus.CheckingAppStore);
-			let appInfo : AppStoreResponse = await fetch(url).then(res=>res.json);
+			let appInfo : AppStoreResponse = await fetch(url).then(res=>res.json());
+			console.log(`appstore请求结果:${JSON.stringify(appInfo)}`);
 			try {
 				if(appInfo && appInfo.resultCount==1){
 					let update : UpdateProp = new UpdateProp(appInfo.results[0]);
@@ -123,23 +146,21 @@ export class Version extends Component <Props,State>{
 					return null;
 				}
 			} catch (error) {
+				console.log(`请求appstore版本异常:${JSON.stringify(error)}`)
 				return null;
 			}
 		}
 
 		/**检查codepush版本 */
 		checkCodepush= async():Promise<?RemotePackage>=>{
-			let remotePackage : ?RemotePackage = await CodePush.checkForUpdate(this.props.codepushKey);
-			if(remotePackage){
-				this.onChangeStatus(UpdateStatus.CodepushHasUpdate);
-			}else{
-				this.onChangeStatus(UpdateStatus.CodepushNoUpdate);
-			}
+			console.log(`__dev__:${__DEV__}`)
+			const key : String = __DEV__ === true ? this.props.codepushDebugKey : this.props.codepushKey
+			let remotePackage : ?RemotePackage = await CodePush.checkForUpdate(key);
 			return remotePackage ;
 		}
 
 		onDownloadProgress = (p:DownloadProgress)=>{
-			
+			this.setState({downloadProgress:p})
 		}
 
 		onError= (err)=>{
@@ -147,9 +168,22 @@ export class Version extends Component <Props,State>{
 		}
 
 		/**下载codepush */
-		getRemoteUpdate =async(remotePackage:RemotePackage):Promise<LocalPackage>=>{
-			let localPackage : LocalPackage = await remotePackage.download(this.onDownloadProgress).catch(this.onError);
-			return localPackage;
+		getRemoteUpdate =async(remotePackage:RemotePackage)=>{
+			// let localPackage : LocalPackage = await remotePackage.download(this.onDownloadProgress).catch(this.onError);
+
+			this.onChangeStatus(UpdateStatus.CodepushIsDownloading);
+			let localPackage : LocalPackage=await remotePackage.download(this.onDownloadProgress).catch(this.onError);
+			if(localPackage){
+				this.onChangeStatus(UpdateStatus.CodepushInInstalling)
+				this.installCodepush(localPackage);
+				if(this.installCodepush){
+					this.onChangeStatus(UpdateStatus.CodepushInstalled)
+					this.onChangeStatus(UpdateStatus.CodepushRestart);
+					this.restart();
+				}
+			}
+
+			// return localPackage;
 		}
 
 		/**安装codepush */
@@ -160,7 +194,8 @@ export class Version extends Component <Props,State>{
 
 		/**重启 */
 		restart = ()=>{
-
+			this.onChangeModal(false)
+			CodePush.restartApp();
 		}
 
 		/**启动更新 */
@@ -171,35 +206,37 @@ export class Version extends Component <Props,State>{
 				console.warn(`appleid属性不能为空`);
 				return ;
 			}
+			this.onChangeStatus(UpdateStatus.CheckingAppStore);
 			let appstoreUpdate : UpdateProp = await this.checkAppStore();
 			let localVersion:String = DeviceInfo.getVersion();
-			if(appstore && Version.hasNew(localVersion,appstoreUpdate.version)){
+			localVersion = '3.0.0';
+			if(appstoreUpdate && Version.hasNew(localVersion,appstoreUpdate.version)){
+				this.setState({data : appstoreUpdate})
 				this.onChangeStatus(UpdateStatus.AppStoreHasUpdate);
-				this.onChangeModal(true);
+				
 			}else{
 				this.onChangeStatus(UpdateStatus.AppStoreNoUpdate);
 				this.onChangeStatus(UpdateStatus.CheckingCodepush);
 				//没有appstore版本
 				let remotePackage : RemotePackage =await this.checkCodepush();
-				if(remotePackage){
-					this.onChangeStatus(UpdateStatus.CodepushHasUpdate);
-					this.onChangeStatus(UpdateStatus.CodepushIsDownloading);
-					let localPackage : LocalPackage=await this.getRemoteUpdate(remotePackage);
-					if(localPackage){
-						this.onChangeStatus(UpdateStatus.CodepushInInstalling)
-						this.installCodepush(localPackage);
-						if(this.installCodepush){
-							this.onChangeStatus(UpdateStatus.CodepushInstalled)
-							this.onChangeStatus(UpdateStatus.CodepushRestart);
-							this.restart();
-						}
+				if(remotePackage && remotePackage.downloadUrl!=''){
+					const codePushInfo : AppInfo = {
+						fileSizeBytes : remotePackage.packageSize,
+						releaseNotes:remotePackage.description,
+						version : `${remotePackage.appVersion}.${remotePackage.label.replace('v','')}`
 					}
+					this.setState({remtePackage:remotePackage,data:new UpdateProp(codePushInfo)},()=>{
+						this.onChangeStatus(UpdateStatus.CodepushHasUpdate);
+					});
+					
 				}else{
 					this.onChangeStatus(UpdateStatus.CodepushNoUpdate);
 				}
 
 			}
 		}
+
+
 
 		/**新旧版本号比较 
 		 * @param {本地版本} localVersion
@@ -231,11 +268,26 @@ export class Version extends Component <Props,State>{
 			}
 		}
 
-		bodyRender = (state:State)=>{
+		/**点击去更新
+		 * 1.去appstore更新
+		 * 2.直接开始下载热更新
+		 */
+		onClickUpdate = ()=>{
+			let currentStatus : UpdateStatus = this.state.status;
+			if(currentStatus == UpdateStatus.AppStoreHasUpdate){
+				Linking.openURL(`itms-apps://itunes.apple.com/app/${this.props.appleid}`)
+			}else if(currentStatus == UpdateStatus.CodepushHasUpdate){
+				this.getRemoteUpdate(this.state.remtePackage);
+			}else{
+				alert('nono')
+			}
+		}
+
+		bodyRender = (state:State,props:Props)=>{
 			switch(state.status){
-				case UpdateStatus.AppStoreHasUpdate:
 				case UpdateStatus.CodepushHasUpdate:
-				case UpdateStatus.CodepushIsDownloading:
+				case UpdateStatus.AppStoreHasUpdate:return <FindNewUpdate data={state.data} themeColor={props.themeColor} onClick={this.onClickUpdate} />
+				case UpdateStatus.CodepushIsDownloading:return <DownloadView progress={state.downloadProgress} prgressColor="blue"/>
 				default:return this.renderNormal(this.state);
 			}
 
@@ -250,21 +302,7 @@ export class Version extends Component <Props,State>{
 		renderInstalling = (state:State)=>{
 			return this.renderNormal(state)
 		}
-		/**发现新版本 */
-		renderHasNew = (state:State)=>{
-			return (
-				<ScrollView>
-					<Text>包大小:{state.data.size} MB</Text>
-					<Text>更新时间:2018-10-10</Text>
-					<Text>更新说明:</Text>
-					{
-						state.data.newFeature.map((item,index)=>{
-							return <Text>{index}:{item}</Text>
-						})
-					}
-				</ScrollView>
-			)
-		}
+
 		/**渲染一般视图：标题+子标题 */
 		renderNormal = (state:State)=>{
 			return (
@@ -272,6 +310,10 @@ export class Version extends Component <Props,State>{
 					<Text>{state.data.title}</Text>
 				</View>
 			)
+		}
+
+		onMaskClick = ()=>{
+			alert('alert');
 		}
 
 		render(){
@@ -283,19 +325,41 @@ export class Version extends Component <Props,State>{
 						transparent={true}
 						onRequestClose={this.onChangeModal}
 						animated={true}
-						animationType="slide"
+						animationType="fade"
+						presentationStyle="overFullScreen"
 						>
-						<View style={[styles.container,style]}>
-								{wrapper(this.state)}
-								<View>
-									{this.bodyRender(this.state)}
+						<TouchableOpacity
+							activeOpacity={1}
+							style={[styles.container,defaultModelStyle]}
+							onPress={this.onMaskClick}>
+						<View 
+								onStartShouldSetResponder={()=>true}
+								// onMoveShouldSetResponder={()=>false}
+								// onMoveShouldSetResponderCapture={()=>false}
+								style={[defaultContainerStyle]}
+								>
+								<View style={defaultHeaderContainer}>
+									{wrapper(this.state)}
+								</View>
+								<View 
+									style={styles.content}>
+									{this.bodyRender(this.state,this.props)}
 								</View>
 						</View>
+						</TouchableOpacity>
 					</Modal>
 				)
 		}
 }
 
 const styles = StyleSheet.create({
-		container:{},
+		container:{
+			flex:1,
+			alignItems:'center',
+			justifyContent:'center',
+			backgroundColor: 'rgba(0,0,0,0.5)',
+		},
+		content:{
+			flex:1,
+		}
 })
