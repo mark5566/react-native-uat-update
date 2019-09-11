@@ -317,10 +317,16 @@ export class Version extends Component <Props,State>{
 
 		onMaskClick = ()=>{
 			// alert('alert');
-			if(!this.props.forceUpdate){
+			if(this.state.status != UpdateStatus.AppStoreHasUpdate && this.state.status!=UpdateStatus.CodepushHasUpdate){
+				if(!this.props.forceUpdate){
+					this.onChangeModal(false);
+					this.props.onClose && this.props.onClose();
+				}
+			}else{
 				this.onChangeModal(false);
-				this.props.onClose && this.props.onClose();
 			}
+
+			
 		}
 
 		render(){
