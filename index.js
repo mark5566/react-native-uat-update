@@ -51,6 +51,8 @@ type Props = {
 		onCPInstalling     : ()=>{},//正在安装
 		onCPInstallComplete: ()=>{},//安装完成
 		onRestart 				 : ()=>{},//重启
+
+		onClose 					 : ()=>{},
 };
 export type State = {
 	data : UpdateProp,
@@ -79,6 +81,7 @@ export class Version extends Component <Props,State>{
 			forceUpdate:true,
 			themeColor : 'rgb(230,180,120)',
 			wrapper : (state:State)=><HeaderDetault data={state}/>,
+			onClose : ()=>{},//当强制更新forceUpdate为true时，不再回调
 			
 			onCheckingAppStore : ()=>{},//检查appstore
 			onCheckedAppStore  : (update:UpdateProp)=>{},//检查到appstore版本有更新
@@ -313,7 +316,11 @@ export class Version extends Component <Props,State>{
 		}
 
 		onMaskClick = ()=>{
-			alert('alert');
+			// alert('alert');
+			if(!this.props.forceUpdate){
+				this.onChangeModal(false);
+				this.props.onClose && this.props.onClose();
+			}
 		}
 
 		render(){
