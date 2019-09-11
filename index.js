@@ -209,7 +209,7 @@ export class Version extends Component <Props,State>{
 			this.onChangeStatus(UpdateStatus.CheckingAppStore);
 			let appstoreUpdate : UpdateProp = await this.checkAppStore();
 			let localVersion:String = DeviceInfo.getVersion();
-			localVersion = '3.0.0';
+			// localVersion = '3.0.0';
 			if(appstoreUpdate && Version.hasNew(localVersion,appstoreUpdate.version)){
 				this.setState({data : appstoreUpdate})
 				this.onChangeStatus(UpdateStatus.AppStoreHasUpdate);
