@@ -14,6 +14,8 @@ import {
 		ScrollView,
 		TouchableWithoutFeedback,
 		Linking,
+		AppState,
+		AppStateStatus,
 } from 'react-native';
 import { UpdateProp,AppInfo,AppStoreResponse, UpdateStatus, } from './index.model';
 import CodePush, { 
@@ -106,7 +108,19 @@ export class Version extends Component <Props,State>{
 			status: UpdateStatus.NoCheck,
 			remotePackage:null
 		}
+		onChange = (state:AppStateStatus)=>{
+			switch(state){
+				case 'active':this.setup();break;
+				default :
+			}
+		}
 
+		addListener = ()=>{
+			AppState.addEventListener('change',this.onChange);
+		}
+		removeListener = ()=>{
+			AppState.removeEventListener('change',this.onChange);
+		}
 		//修改当前状态
 		onChangeStatus = (status:UpdateStatus)=>{
 			console.log(`当前状态:${status}`);
@@ -132,6 +146,10 @@ export class Version extends Component <Props,State>{
 
 		componentDidMount(){
 			this.setup();
+			this.addListener()
+		}
+		componentWillUnmount(){
+			this.removeListener();
 		}
 
 		/**检查appstore版本 */
