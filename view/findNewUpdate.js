@@ -50,9 +50,7 @@ export class FindNewUpdate extends Component <Props,State>{
 									
 									<Text style={styles.txt}>更新包大小:{parseFloat(data.size).toFixed(1)}MB</Text>
 									<Text style={[styles.txt,styles.titleTxt]}>更新说明:</Text>
-									{
-										data.newFeature.map((item,index)=><Text style={styles.des} key={`${index}`}>{item}</Text>)
-									}
+								
 									{
 										data.newFeature.map((item,index)=><View><Text style={styles.des} key={`${index}`}>{item}</Text></View>)
 									}
