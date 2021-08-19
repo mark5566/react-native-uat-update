@@ -197,20 +197,29 @@ export class Version extends Component <Props,State>{
 			if(localPackage){
 				this.onChangeStatus(UpdateStatus.CodepushInInstalling)
 				this.installCodepush(localPackage);
-				if(this.installCodepush){
-					this.onChangeStatus(UpdateStatus.CodepushInstalled)
-					this.onChangeStatus(UpdateStatus.CodepushRestart);
-					this.restart();
-				}
+				return ;
+				// this.installCodepush(localPackage);
+				// if(this.installCodepush){
+				// 	this.onChangeStatus(UpdateStatus.CodepushInstalled)
+				// 	this.onChangeStatus(UpdateStatus.CodepushRestart);
+				// 	this.restart();
+				// }
 			}
 
 			// return localPackage;
 		}
 
 		/**安装codepush */
-		installCodepush =async (localPackage:LocalPackage):Promise<Boolean>=>{
-			let installProgress  = await localPackage.install();
-			return installProgress;
+		installCodepush = (localPackage:LocalPackage)=>{
+			localPackage.install(CodePush.InstallMode.IMMEDIATE).then(res=>{
+
+			}).catch(res=>{
+				console.error(res);
+				
+			}).finally(()=>{
+				this.restart()
+			});
+			
 		}
 
 		/**重启 */
