@@ -31,7 +31,7 @@
   },
   "bundleDependencies": false,
   "dependencies": {
-    "react-native-code-push": "5.5.1",
+    "react-native-code-push": "7.0.5",
     "react-native-device-info": "^2.3.2"
   },
   "deprecated": false,
